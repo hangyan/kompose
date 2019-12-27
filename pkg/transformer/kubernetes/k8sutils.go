@@ -20,6 +20,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/Jeffail/gabs"
 	"io/ioutil"
 	"os"
 	"path"
@@ -634,13 +635,47 @@ func resetWorkloadApiVersion(d runtime.Object) runtime.Object {
 				Version: "v1",
 				Kind:    d.GetObjectKind().GroupVersionKind().Kind,
 			})
-			return &us
-		} else {
-			return d
+
+			// for unknown reason ( seems like the types does not declare json tag), if a deployment
+			// has a ConfigMap volume, the `Name` field should be `name`
+
+			data, err := json.Marshal(us)
+			if err != nil {
+				return &us
+			} else {
+				parsed, err := gabs.ParseJSON(data)
+				if err != nil {
+					return &us
+				}
+				value := parsed.Path("Object.spec.template.spec")
+				for idx, child := range value.S("volumes").Children() {
+					c := child.Data().(map[string]interface{})
+					if v, ok := c["configMap"]; ok {
+						vm := v.(map[string]interface{})
+						vm["name"] = vm["Name"]
+						delete(vm, "Name")
+						if _, err = child.Set(vm, "configMap"); err != nil {
+							return &us
+						}
+						if _, err := value.S("volumes").SetIndex(child.Data(), idx); err != nil {
+							return &us
+						}
+					}
+
+				}
+				if _, err := parsed.Set(value, "Object.spec.template.spec"); err != nil {
+					return &us
+				}
+				var result runtime.Unstructured
+				if err := json.Unmarshal(parsed.Path("Object").Bytes(), &result); err == nil {
+					return &result
+				}
+				return &us
+			}
 		}
-	} else {
-		return d
 	}
+	return d
+
 }
 
 // FixWorkloadVersion force reset deployment/daemonset's apiversion to apps/v1
