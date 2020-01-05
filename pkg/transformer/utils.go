@@ -19,6 +19,7 @@ package transformer
 import (
 	"fmt"
 	"io/ioutil"
+	"k8s.io/client-go/1.4/pkg/api"
 	"os"
 	"os/exec"
 	"path"
@@ -34,7 +35,7 @@ import (
 	"github.com/kubernetes/kompose/pkg/version"
 
 	"github.com/pkg/errors"
-	"k8s.io/kubernetes/pkg/api"
+
 )
 
 // Selector used as labels and selector

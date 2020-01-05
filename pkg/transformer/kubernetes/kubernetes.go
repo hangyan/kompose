@@ -20,6 +20,11 @@ import (
 	"fmt"
 	"github.com/spf13/pflag"
 	"io/ioutil"
+	"k8s.io/client-go/1.4/pkg/api"
+	"k8s.io/client-go/1.4/pkg/api/unversioned"
+	"k8s.io/client-go/1.4/pkg/apis/extensions"
+	"k8s.io/client-go/1.4/pkg/runtime"
+	"k8s.io/client-go/1.4/pkg/util/intstr"
 	"k8s.io/kubernetes/pkg/client/unversioned/clientcmd"
 	"os"
 	"path"
@@ -39,17 +44,16 @@ import (
 	_ "k8s.io/kubernetes/pkg/api/install"
 	_ "k8s.io/kubernetes/pkg/apis/extensions/install"
 
-	"k8s.io/kubernetes/pkg/api"
+
 	"k8s.io/kubernetes/pkg/api/resource"
-	"k8s.io/kubernetes/pkg/api/unversioned"
-	"k8s.io/kubernetes/pkg/apis/extensions"
+
 
 	client "k8s.io/kubernetes/pkg/client/unversioned"
 	"k8s.io/kubernetes/pkg/kubectl"
 	cmdutil "k8s.io/kubernetes/pkg/kubectl/cmd/util"
 
-	"k8s.io/kubernetes/pkg/runtime"
-	"k8s.io/kubernetes/pkg/util/intstr"
+
+
 
 	//"k8s.io/kubernetes/pkg/controller/daemon"
 	"sort"

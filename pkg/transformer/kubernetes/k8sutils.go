@@ -21,6 +21,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"k8s.io/client-go/1.4/pkg/api"
+	"k8s.io/client-go/1.4/pkg/api/unversioned"
+	"k8s.io/client-go/1.4/pkg/apis/extensions"
+	"k8s.io/client-go/1.4/pkg/runtime"
 	"os"
 	"path"
 	"path/filepath"
@@ -35,11 +39,6 @@ import (
 	"github.com/kubernetes/kompose/pkg/transformer"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
-
-	"k8s.io/kubernetes/pkg/api"
-	"k8s.io/kubernetes/pkg/api/unversioned"
-	"k8s.io/kubernetes/pkg/apis/extensions"
-	"k8s.io/kubernetes/pkg/runtime"
 
 	"sort"
 
