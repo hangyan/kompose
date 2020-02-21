@@ -35,6 +35,8 @@ const (
 	LabelNodePortPort = "kompose.service.nodeport.port"
 	// LabelServiceExpose defines if the service needs to be made accessible from outside the cluster or not
 	LabelServiceExpose = "kompose.service.expose"
+	// LabelServiceExposePath defines the path when the services has been made accessible from outside
+	LabelServiceExposePath = "kompose.service.expose.path"
 	// LabelServiceExposeTLSSecret  provides the name of the TLS secret to use with the Kubernetes ingress controller
 	LabelServiceExposeTLSSecret = "kompose.service.expose.tls-secret"
 	// LabelControllerType defines the type of controller to be created

@@ -504,6 +504,8 @@ func parseKomposeLabels(labels map[string]string, serviceConfig *kobject.Service
 			serviceConfig.ServiceType = serviceType
 		case LabelServiceExpose:
 			serviceConfig.ExposeService = strings.Trim(strings.ToLower(value), " ,")
+		case LabelServiceExposePath:
+			serviceConfig.ExposeServicePath = value
 		case LabelNodePortPort:
 			serviceConfig.NodePortPort = cast.ToInt32(value)
 		case LabelServiceExposeTLSSecret:
@@ -517,8 +519,13 @@ func parseKomposeLabels(labels map[string]string, serviceConfig *kobject.Service
 		}
 	}
 
-	if serviceConfig.ExposeService == "" && serviceConfig.ExposeServiceTLS != "" {
-		return errors.New("kompose.service.expose.tls-secret was specified without kompose.service.expose")
+	if serviceConfig.ExposeService == "" {
+		if serviceConfig.ExposeServicePath != "" {
+			return errors.New("kompose.service.expose.path was specified without kompose.service.expose")
+		}
+		if serviceConfig.ExposeServiceTLS != "" {
+			return errors.New("kompose.service.expose.tls-secret was specified without kompose.service.expose")
+		}
 	}
 
 	if serviceConfig.ServiceType != string(api.ServiceTypeNodePort) && serviceConfig.NodePortPort != 0 {
