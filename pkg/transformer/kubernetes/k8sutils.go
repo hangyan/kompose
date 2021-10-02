@@ -396,7 +396,7 @@ func (k *Kubernetes) initSvcObject(name string, service kobject.ServiceConfig, p
 }
 
 // CreateService creates a k8s service
-func (k *Kubernetes) CreateService(name string, service kobject.ServiceConfig, objects []runtime.Object) *api.Service {
+func (k *Kubernetes) CreateService(name string, service kobject.ServiceConfig) *api.Service {
 	svc := k.InitSvc(name, service)
 
 	// Configure the service ports.
@@ -721,12 +721,28 @@ func getServiceGroupID(service kobject.ServiceConfig, mode string) string {
 	return ""
 }
 
+// isGenPod determine if we should create only a pod for this service.
+func isGenPod(service kobject.ServiceConfig, opt kobject.ConvertOptions) bool {
+	return (service.Restart == "no" || service.Restart == "on-failure") && !opt.IsPodController()
+}
+
 // KomposeObjectToServiceConfigGroupMapping returns the service config group by name or by volume
-func KomposeObjectToServiceConfigGroupMapping(komposeObject kobject.KomposeObject, groupMode string) map[string]kobject.ServiceConfigGroup {
+// This group function works as following
+// 1. Support two mode
+//   (1): label: use a custom label, the service that contains it will be merged to one workload.
+//   (2): volume: the service that share to exactly same volume config will be merged to one workload. If use pvc, only
+//                 create one for this group.
+// 2. If service containers restart policy and no workload argument provide and it's restart policy looks like a pod, then
+//    this service should generate a pod. If group mode specified, it should be grouped and ignore the restart policy.
+// 3. If group mode specified, port conflict between services in one group will be ignored, and multiple service should be created.
+// 4. If `volume` group mode specified, we don't have an appropriate name for this combined service, use the first one for now.
+//    A warn/info message should be printed to let the user know.
+func KomposeObjectToServiceConfigGroupMapping(komposeObject kobject.KomposeObject, opt kobject.ConvertOptions) map[string]kobject.ServiceConfigGroup {
 	serviceConfigGroup := make(map[string]kobject.ServiceConfigGroup)
 
 	for name, service := range komposeObject.ServiceConfigs {
-		if groupID := getServiceVolumesID(service); groupID != "" {
+		groupID := getServiceGroupID(service, opt.ServiceGroupMode)
+		if groupID != "" {
 			service.Name = name
 			serviceConfigGroup[groupID] = append(serviceConfigGroup[groupID], service)
 		} else {

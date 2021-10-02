@@ -48,8 +48,6 @@ func AddContainer(service kobject.ServiceConfig, opt kobject.ConvertOptions) Pod
 			Stdin:      service.Stdin,
 			TTY:        service.Tty,
 		})
-
-		podSpec.Affinity = ConfigAffinity(service)
 	}
 }
 
