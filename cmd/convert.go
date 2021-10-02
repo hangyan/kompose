@@ -59,7 +59,12 @@ var (
 
 	// MultipleContainerMode which enables creating multi containers in a single pod is a developping function.
 	// default is false
+	// Deprecated: Use `ContainerGroupMode` instead
 	MultipleContainerMode bool
+
+	// ServiceGroupMode specify how we can group multiple services'container in one pod. Choices are: kompose label,
+	// shared volumes.
+	ServiceGroupMode string
 )
 
 var convertCmd = &cobra.Command{
@@ -103,7 +108,12 @@ var convertCmd = &cobra.Command{
 			IsDeploymentConfigFlag:      cmd.Flags().Lookup("deployment-config").Changed,
 			YAMLIndent:                  ConvertYAMLIndent,
 			WithKomposeAnnotation:       WithKomposeAnnotation,
-			MultipleContainerMode:       MultipleContainerMode,
+			ServiceGroupMode: ServiceGroupMode,
+		}
+
+		if ServiceGroupMode == "" && MultipleContainerMode {
+			// legacy flag
+			ConvertOpt.ServiceGroupMode = "label"
 		}
 
 		app.ValidateFlags(args, cmd, &ConvertOpt)
@@ -132,7 +142,10 @@ func init() {
 	convertCmd.Flags().MarkHidden("daemon-set")
 	convertCmd.Flags().MarkHidden("replication-controller")
 	convertCmd.Flags().MarkHidden("deployment")
+
 	convertCmd.Flags().BoolVar(&MultipleContainerMode, "multiple-container-mode", false, "Create multiple containers grouped by 'kompose.service.group' label")
+	convertCmd.Flags().StringVar(&ServiceGroupMode, "service-group-mode", "", "Group multiple service to create single workload by `label`(`kompose.service.group`) or `volumes`(shared volumes)")
+	convertCmd.Flags().MarkDeprecated("multiple-container-mode", "use --service-group-mode=label")
 
 	// OpenShift only
 	convertCmd.Flags().BoolVar(&ConvertDeploymentConfig, "deployment-config", true, "Generate an OpenShift deploymentconfig object")

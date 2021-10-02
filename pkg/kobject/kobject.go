@@ -80,6 +80,8 @@ type ConvertOptions struct {
 	WithKomposeAnnotation bool
 
 	MultipleContainerMode bool
+
+	ServiceGroupMode string
 }
 
 // IsPodController indicate if the user want to use a controller
@@ -103,7 +105,6 @@ type ServiceConfig struct {
 	DomainName        string              `compose:"domainname"`
 	HostName          string              `compose:"hostname"`
 	Args              []string            `compose:"args"`
-	VolList           []string            `compose:"volumes"`
 	Network           []string            `compose:"network"`
 	Labels            map[string]string   `compose:"labels"`
 	Annotations       map[string]string   `compose:""`
@@ -120,7 +121,6 @@ type ServiceConfig struct {
 	Privileged        bool                `compose:"privileged"`
 	Restart           string              `compose:"restart"`
 	User              string              `compose:"user"`
-	VolumesFrom       []string            `compose:"volumes_from"`
 	ServiceType       string              `compose:"kompose.service.type"`
 	NodePortPort      int32               `compose:"kompose.service.nodeport.port"`
 	StopGracePeriod   string              `compose:"stop_grace_period"`
@@ -143,7 +143,12 @@ type ServiceConfig struct {
 	Dockerfile         string                      `compose:"dockerfile"`
 	Replicas           int                         `compose:"replicas"`
 	GroupAdd           []int64                     `compose:"group_add"`
+	// VolList represents raw string format of volume mount list
+	VolList            []string                    `compose:"volumes"`
+	// Volumes is the parsed result of compose volumes mounts
 	Volumes            []Volumes                   `compose:""`
+	// VolumesFrom is compose v2's volumes_from, removed in v3.
+	VolumesFrom        []string                    `compose:"volumes_from"`
 	Secrets            []dockerCliTypes.ServiceSecretConfig
 	HealthChecks       HealthChecks `compose:""`
 	Placement          Placement    `compose:""`

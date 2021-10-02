@@ -700,17 +700,40 @@ func (k *Kubernetes) UpdateKubernetesObjects(name string, service kobject.Servic
 	return nil
 }
 
-// KomposeObjectToServiceConfigGroupMapping returns the service config group by name
-func KomposeObjectToServiceConfigGroupMapping(komposeObject kobject.KomposeObject) map[string]kobject.ServiceConfigGroup {
+// getServiceVolumesID create a unique id for the service's volume mounts
+func getServiceVolumesID(service kobject.ServiceConfig) string {
+	id := ""
+	for _, v := range service.VolList {
+		id += v
+	}
+	return id
+}
+
+// getServiceGroupID ...
+// return empty string should mean this service should go alone
+func getServiceGroupID(service kobject.ServiceConfig, mode string) string {
+	if mode == "label" {
+		return service.Labels[compose.LabelServiceGroup]
+	}
+	if mode == "volume" {
+		return getServiceVolumesID(service)
+	}
+	return ""
+}
+
+// KomposeObjectToServiceConfigGroupMapping returns the service config group by name or by volume
+func KomposeObjectToServiceConfigGroupMapping(komposeObject kobject.KomposeObject, groupMode string) map[string]kobject.ServiceConfigGroup {
 	serviceConfigGroup := make(map[string]kobject.ServiceConfigGroup)
+
 	for name, service := range komposeObject.ServiceConfigs {
-		if groupID, ok := service.Labels[compose.LabelServiceGroup]; ok {
+		if groupID := getServiceVolumesID(service); groupID != "" {
 			service.Name = name
 			serviceConfigGroup[groupID] = append(serviceConfigGroup[groupID], service)
 		} else {
 			serviceConfigGroup[name] = append(serviceConfigGroup[name], service)
 		}
 	}
+
 	return serviceConfigGroup
 }
 

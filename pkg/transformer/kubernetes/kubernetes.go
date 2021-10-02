@@ -1193,6 +1193,39 @@ func (k *Kubernetes) CreateNetworkPolicy(name string, networkName string) (*netw
 	return np, nil
 }
 
+
+func buildImageIfRequired(service kobject.ServiceConfig, opt kobject.ConvertOptions) {
+	// Must build the images before conversion (got to add service.Image in case 'image' key isn't provided
+	// Check that --build is set to true
+	// Check to see if there is an InputFile (required!) before we build the container
+	// Check that there's actually a Build key
+	// Lastly, we must have an Image name to continue
+	if opt.Build == "local" && opt.InputFiles != nil && service.Build != "" {
+		// If there's no "image" key, use the name of the container that's built
+		if service.Image == "" {
+			service.Image = name
+		}
+
+		if service.Image == "" {
+			return nil, fmt.Errorf("image key required within build parameters in order to build and push service '%s'", name)
+		}
+
+		log.Infof("Build key detected. Attempting to build image '%s'", service.Image)
+
+		// Build the image!
+		err := transformer.BuildDockerImage(service, name)
+		if err != nil {
+			return nil, errors.Wrapf(err, "Unable to build Docker image for service %v", name)
+		}
+
+		// Push the built image to the repo!
+		err = transformer.PushDockerImageWithOpt(service, name, opt)
+		if err != nil {
+			return nil, errors.Wrapf(err, "Unable to push Docker image for service %v", name)
+		}
+	}
+}
+
 // Transform maps komposeObject to k8s objects
 // returns object that are already sorted in the way that Services are first
 func (k *Kubernetes) Transform(komposeObject kobject.KomposeObject, opt kobject.ConvertOptions) ([]runtime.Object, error) {
@@ -1209,8 +1242,8 @@ func (k *Kubernetes) Transform(komposeObject kobject.KomposeObject, opt kobject.
 		}
 	}
 
-	if opt.MultipleContainerMode {
-		komposeObjectToServiceConfigGroupMapping := KomposeObjectToServiceConfigGroupMapping(komposeObject)
+	if opt.ServiceGroupMode != "" {
+		komposeObjectToServiceConfigGroupMapping := KomposeObjectToServiceConfigGroupMapping(komposeObject, opt.ServiceGroupMode)
 		for name, group := range komposeObjectToServiceConfigGroupMapping {
 			service := komposeObject.ServiceConfigs[name]
 			var objects []runtime.Object
